@@ -1,0 +1,39 @@
+#pragma once
+
+#include <QDialog>
+#include <QTableWidgetItem>
+#include <QVector>
+
+struct Device {
+    QString strDeviceName;
+    QString strDeviceIP;
+    QString strDevicePort;
+    bool bEnabled = true;
+};
+
+namespace Ui {
+class DeviceManagerMain;
+}
+
+class DeviceManagerMain : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit DeviceManagerMain(QWidget *parent = nullptr);
+    ~DeviceManagerMain() override;
+
+    void setDevices(const QVector<Device> &devices);
+
+private slots:
+    void onAddDevice();
+    void onEditDevice();
+    void onDeleteDevice();
+    void onTableItemDoubleClicked(QTableWidgetItem *item);
+
+private:
+    Ui::DeviceManagerMain *ui;
+    QVector<Device> m_vecDevice;
+
+    void refreshTable();
+};
