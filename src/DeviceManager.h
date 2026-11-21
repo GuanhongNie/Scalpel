@@ -12,16 +12,16 @@ struct Device {
 };
 
 namespace Ui {
-class DeviceManagerMain;
+class DeviceManager;
 }
 
-class DeviceManagerMain : public QDialog
+class DeviceManager : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit DeviceManagerMain(QWidget *parent = nullptr);
-    ~DeviceManagerMain() override;
+    explicit DeviceManager(QWidget *parent = nullptr);
+    ~DeviceManager() override;
 
     void setDevices(const QVector<Device> &devices);
 
@@ -32,7 +32,7 @@ private slots:
     void onTableItemDoubleClicked(QTableWidgetItem *item);
 
 private:
-    Ui::DeviceManagerMain *ui;
+    Ui::DeviceManager *ui;
     QVector<Device> m_vecDevice;
 
     void refreshTable();

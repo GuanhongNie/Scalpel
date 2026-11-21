@@ -12,6 +12,7 @@ class ProcedureManager;
 class ReagentManager;
 class DeviceDetail;
 class TcpProtocol;
+class QButtonGroup;
 class QVBoxLayout;
 class QResizeEvent;
 
@@ -33,6 +34,8 @@ private:
     void resizeEvent(QResizeEvent *event) override;
 
     Ui::MainWindow *ui;
+    QButtonGroup *m_topButtonGroup = nullptr;
+    QButtonGroup *m_deviceButtonGroup = nullptr;
 
     typedef struct {
         QString strDeviceName;
@@ -49,6 +52,7 @@ private:
     void onDeviceButtonClicked(int index);
     void refreshDeviceButtons();
     void updateDeviceButtonStatus(const QString &ip, bool connected);
+    void clearButtonGroupSelection(QButtonGroup *group);
 
     SlideManager *m_pSliderManager = nullptr;
     LabHistory *m_pLabHistory = nullptr;

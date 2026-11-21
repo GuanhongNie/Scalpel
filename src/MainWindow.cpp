@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "DBManager.h"
-#include "DeviceManagerMain.h"
+#include "DeviceManager.h"
 #include "SlideManager.h"
 #include "LabHistory.h"
 #include "ProcedureManager.h"
@@ -9,8 +9,12 @@
 #include "DeviceDetail.h"
 #include "TcpProtocol.h"
 
+#include <QAbstractButton>
+#include <QButtonGroup>
 #include <QHBoxLayout>
+#include <QColor>
 #include <QMessageBox>
+#include <QPalette>
 #include <QResizeEvent>
 #include <QSizePolicy>
 #include <QVBoxLayout>
@@ -21,6 +25,27 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->statusbar->hide();
+
+    m_topButtonGroup = new QButtonGroup(this);
+    m_topButtonGroup->setExclusive(true);
+    m_deviceButtonGroup = new QButtonGroup(this);
+    m_deviceButtonGroup->setExclusive(true);
+
+    const auto configureTopButton = [this](QPushButton *button) {
+        button->setCheckable(true);
+        m_topButtonGroup->addButton(button);
+        button->setStyleSheet(
+            "QPushButton:checked, QPushButton:checked:hover, QPushButton:checked:pressed {"
+            " background-color: #FFFF00; border: 1px solid #FFFF00; }");
+        connect(button, &QPushButton::toggled, this, [this](bool checked) {
+            if (checked)
+                clearButtonGroupSelection(m_deviceButtonGroup);
+        });
+    };
+    configureTopButton(ui->btnSlideManager);
+    configureTopButton(ui->btnLabHistory);
+    configureTopButton(ui->btnProcedureManager);
+    configureTopButton(ui->btnReagentManager);
 
     // 使用centralwidget布局管理器来管理顶部按钮组和左侧设备列表滚动区域，使其布满整个窗口
     auto *centralLayout = new QVBoxLayout(ui->centralwidget);
@@ -44,13 +69,21 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget *deviceWidget = new QWidget(ui->scaDevice);
     ui->scaDevice->setWidget(deviceWidget);
 
+    QPalette devicePalette = ui->scaDevice->palette();
+    devicePalette.setColor(QPalette::Window, QColor(153, 217, 234));
+    ui->scaDevice->viewport()->setPalette(devicePalette);
+    ui->scaDevice->viewport()->setAutoFillBackground(true);
+    deviceWidget->setPalette(devicePalette);
+    deviceWidget->setAutoFillBackground(true);
+
     m_vblDeviceLayout = new QVBoxLayout(deviceWidget);
     m_vblDeviceLayout->setContentsMargins(2, 2, 2, 2);
     m_vblDeviceLayout->setSpacing(2);
+    m_vblDeviceLayout->setAlignment(Qt::AlignTop);
 
     // 设备管理按钮
     connect(ui->btnDeviceManager, &QPushButton::clicked, this, [this]() {
-        DeviceManagerMain dialog(this);
+        DeviceManager dialog(this);
         dialog.exec();
         refreshDeviceButtons();
     });
@@ -93,13 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_pProcedureManager = new ProcedureManager(ui->centralwidget);
     m_pProcedureManager->hide();
-    m_pProcedureManager->setAttribute(Qt::WA_StyledBackground, true);
-    m_pProcedureManager->setAutoFillBackground(true);
     m_pProcedureManager->resize(200, 120);
-
-    QPalette procedureManagerPalette = m_pProcedureManager->palette();
-    procedureManagerPalette.setColor(QPalette::Window, Qt::blue);
-    m_pProcedureManager->setPalette(procedureManagerPalette);
 
     connect(ui->btnProcedureManager, &QPushButton::clicked, this, [this]() {
         showPopup(m_pProcedureManager);
@@ -112,7 +139,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_pReagentManager->resize(200, 120);
 
     QPalette reagentManagerPalette = m_pReagentManager->palette();
-    reagentManagerPalette.setColor(QPalette::Window, Qt::yellow);
+    reagentManagerPalette.setColor(QPalette::Window, Qt::darkRed);
     m_pReagentManager->setPalette(reagentManagerPalette);
 
     connect(ui->btnReagentManager, &QPushButton::clicked, this, [this]() {
@@ -123,6 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_pDeviceDetail->setAttribute(Qt::WA_StyledBackground, true);
     m_pDeviceDetail->setAutoFillBackground(true);
     m_pDeviceDetail->resize(200, 120);
+    m_currentPopup = m_pDeviceDetail; // 启动时显示DeviceDetail窗口，它也就是当前的弹出窗口
 
     QPalette deviceDetailPalette = m_pDeviceDetail->palette();
     deviceDetailPalette.setColor(QPalette::Window, Qt::cyan);
@@ -135,6 +163,10 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
+
+    const int deviceButtonX = qMax(
+        0, ui->grbTop->width() - ui->btnDeviceManager->width() - 2);
+    ui->btnDeviceManager->move(deviceButtonX, ui->btnDeviceManager->y());
 
     const QRect centralRect = ui->centralwidget->rect();
     const int x = ui->scaDevice->geometry().right() + 1;
@@ -258,7 +290,11 @@ void MainWindow::updateDeviceButtonStatus(const QString &ip, bool connected)
     {
         if (dbi.strDeviceIP == ip)
         {
-            if (!dbi.bDeviceEnabled)
+            if (dbi.btnDevice->isChecked())
+                dbi.btnDevice->setStyleSheet(
+                    "QPushButton, QPushButton:hover, QPushButton:pressed {"
+                    " background-color: #0000FF; border: 1px solid #0000FF; }");
+            else if (!dbi.bDeviceEnabled)
                 dbi.btnDevice->setStyleSheet("QPushButton { background-color: red; }");
             else
                 dbi.btnDevice->setStyleSheet(
@@ -266,6 +302,20 @@ void MainWindow::updateDeviceButtonStatus(const QString &ip, bool connected)
             break;
         }
     }
+}
+
+void MainWindow::clearButtonGroupSelection(QButtonGroup *group)
+{
+    if (!group)
+        return;
+
+    QAbstractButton *checkedButton = group->checkedButton();
+    if (!checkedButton)
+        return;
+
+    group->setExclusive(false);
+    checkedButton->setChecked(false);
+    group->setExclusive(true);
 }
 
 void MainWindow::onDeviceButtonClicked(int index)
@@ -300,7 +350,15 @@ void MainWindow::refreshDeviceButtons()
         auto *btnDevice = new QPushButton(ui->scaDevice->widget());
         btnDevice->setFixedHeight(buttonSide);
         btnDevice->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        btnDevice->setCheckable(true);
+        m_deviceButtonGroup->addButton(btnDevice);
         btnDevice->setText(device.strDeviceName);
+        const QString deviceIp = device.strDeviceIP;
+        connect(btnDevice, &QPushButton::toggled, this, [this, deviceIp](bool checked) {
+            updateDeviceButtonStatus(deviceIp, isIpConnected(deviceIp));
+            if (checked)
+                clearButtonGroupSelection(m_topButtonGroup);
+        });
         connect(btnDevice, &QPushButton::clicked, this, [this, i]() {
             onDeviceButtonClicked(i + 1);
         });
@@ -325,6 +383,6 @@ void MainWindow::refreshDeviceButtons()
     }
 
     const int totalHeight = buttonCount * buttonSide
-        + qMax(0, buttonCount - 1) * m_vblDeviceLayout->spacing() + 10;
+        + qMax(0, buttonCount - 1) * m_vblDeviceLayout->spacing() + 4;
     ui->scaDevice->widget()->setMinimumHeight(totalHeight);
 }

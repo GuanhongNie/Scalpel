@@ -1,19 +1,19 @@
 #pragma once
 
 #include <QDialog>
-#include "DeviceManagerMain.h"
+#include "DeviceManager.h"
 
 namespace Ui {
-class DeviceManagerSub;
+class DeviceAdmin;
 }
 
-class DeviceManagerSub : public QDialog
+class DeviceAdmin : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit DeviceManagerSub(QWidget *parent = nullptr);
-    ~DeviceManagerSub() override;
+    explicit DeviceAdmin(QWidget *parent = nullptr);
+    ~DeviceAdmin() override;
 
     void setDevice(const Device &device);
     Device device() const;
@@ -24,7 +24,7 @@ private slots:
     void onOkClicked();
 
 private:
-    Ui::DeviceManagerSub *ui;
+    Ui::DeviceAdmin *ui;
     QStringList m_existingDeviceNames;
     QString m_currentDeviceName;
 };

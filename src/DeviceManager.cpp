@@ -1,26 +1,26 @@
-#include "DeviceManagerMain.h"
-#include "DeviceManagerSub.h"
-#include "ui_DeviceManagerMain.h"
+#include "DeviceManager.h"
+#include "DeviceAdmin.h"
+#include "ui_DeviceManager.h"
 
 #include <QMessageBox>
 #include <QTableWidgetItem>
 
 #include "DBManager.h"
 
-DeviceManagerMain::DeviceManagerMain(QWidget *parent)
+DeviceManager::DeviceManager(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::DeviceManagerMain)
+    , ui(new Ui::DeviceManager)
 {
     ui->setupUi(this);
    // setWindowTitle("Device Manager");
 
-    ui->tableWidgetDevices->setColumnCount(4);
-    ui->tableWidgetDevices->setHorizontalHeaderLabels({"设备名称", "设备 IP", "设备端口", "启用设备"});
-    ui->tableWidgetDevices->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableWidgetDevices->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->tableWidgetDevices->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->tableWidgetDevices->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->tableWidgetDevices->horizontalHeader()->setStyleSheet(
+    ui->tblWidgetDevices->setColumnCount(4);
+    ui->tblWidgetDevices->setHorizontalHeaderLabels({"设备名称", "设备 IP", "设备端口", "启用设备"});
+    ui->tblWidgetDevices->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tblWidgetDevices->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tblWidgetDevices->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tblWidgetDevices->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tblWidgetDevices->horizontalHeader()->setStyleSheet(
         "QHeaderView::section {"
         "background-color: #C8DFF0;"
         "color: #17324D;"
@@ -28,22 +28,22 @@ DeviceManagerMain::DeviceManagerMain(QWidget *parent)
         "padding: 5px;"
         "border: 1px solid #A9C3D8;"
         "}");
-    ui->tableWidgetDevices->setAlternatingRowColors(true);
+    ui->tblWidgetDevices->setAlternatingRowColors(true);
 
     ui->pushButtonEdit->setEnabled(false);
     ui->pushButtonDelete->setEnabled(false);
 
-    connect(ui->pushButtonNew, &QPushButton::clicked, this, &DeviceManagerMain::onAddDevice);
-    connect(ui->pushButtonEdit, &QPushButton::clicked, this, &DeviceManagerMain::onEditDevice);
-    connect(ui->pushButtonDelete, &QPushButton::clicked, this, &DeviceManagerMain::onDeleteDevice);
-    connect(ui->tableWidgetDevices, &QTableWidget::itemSelectionChanged, this, [this]() {
-        const bool hasSelection = ui->tableWidgetDevices->currentRow() >= 0
-            && ui->tableWidgetDevices->currentRow() < ui->tableWidgetDevices->rowCount();
+    connect(ui->pushButtonNew, &QPushButton::clicked, this, &DeviceManager::onAddDevice);
+    connect(ui->pushButtonEdit, &QPushButton::clicked, this, &DeviceManager::onEditDevice);
+    connect(ui->pushButtonDelete, &QPushButton::clicked, this, &DeviceManager::onDeleteDevice);
+    connect(ui->tblWidgetDevices, &QTableWidget::itemSelectionChanged, this, [this]() {
+        const bool hasSelection = ui->tblWidgetDevices->currentRow() >= 0
+            && ui->tblWidgetDevices->currentRow() < ui->tblWidgetDevices->rowCount();
         ui->pushButtonEdit->setEnabled(hasSelection);
         ui->pushButtonDelete->setEnabled(hasSelection);
     });
-    connect(ui->tableWidgetDevices, &QTableWidget::itemDoubleClicked,
-            this, &DeviceManagerMain::onTableItemDoubleClicked);
+    connect(ui->tblWidgetDevices, &QTableWidget::itemDoubleClicked,
+            this, &DeviceManager::onTableItemDoubleClicked);
 
     m_vecDevice.clear();
 
@@ -65,37 +65,37 @@ DeviceManagerMain::DeviceManagerMain(QWidget *parent)
     refreshTable();
 }
 
-DeviceManagerMain::~DeviceManagerMain()
+DeviceManager::~DeviceManager()
 {
     delete ui;
 }
 
-void DeviceManagerMain::setDevices(const QVector<Device> &devices)
+void DeviceManager::setDevices(const QVector<Device> &devices)
 {
     m_vecDevice = devices;
     refreshTable();
 }
 
-void DeviceManagerMain::refreshTable()
+void DeviceManager::refreshTable()
 {
-    ui->tableWidgetDevices->clearContents();
-    ui->tableWidgetDevices->setRowCount(static_cast<int>(m_vecDevice.size()));
-    ui->tableWidgetDevices->clearSelection();
+    ui->tblWidgetDevices->clearContents();
+    ui->tblWidgetDevices->setRowCount(static_cast<int>(m_vecDevice.size()));
+    ui->tblWidgetDevices->clearSelection();
 
     for (int row = 0; row < m_vecDevice.size(); ++row)
     {
         const Device &device = m_vecDevice.at(row);
-        ui->tableWidgetDevices->setItem(row, 0, new QTableWidgetItem(device.strDeviceName));
-        ui->tableWidgetDevices->setItem(row, 1, new QTableWidgetItem(device.strDeviceIP));
-        ui->tableWidgetDevices->setItem(row, 2, new QTableWidgetItem(device.strDevicePort));
-        ui->tableWidgetDevices->setItem(row, 3, new QTableWidgetItem(device.bEnabled ? "是" : "否"));
+        ui->tblWidgetDevices->setItem(row, 0, new QTableWidgetItem(device.strDeviceName));
+        ui->tblWidgetDevices->setItem(row, 1, new QTableWidgetItem(device.strDeviceIP));
+        ui->tblWidgetDevices->setItem(row, 2, new QTableWidgetItem(device.strDevicePort));
+        ui->tblWidgetDevices->setItem(row, 3, new QTableWidgetItem(device.bEnabled ? "是" : "否"));
     }
 
-    ui->pushButtonEdit->setEnabled(ui->tableWidgetDevices->currentRow() >= 0 && ui->tableWidgetDevices->currentRow() < ui->tableWidgetDevices->rowCount());
-    ui->pushButtonDelete->setEnabled(ui->tableWidgetDevices->currentRow() >= 0 && ui->tableWidgetDevices->currentRow() < ui->tableWidgetDevices->rowCount());
+    ui->pushButtonEdit->setEnabled(ui->tblWidgetDevices->currentRow() >= 0 && ui->tblWidgetDevices->currentRow() < ui->tblWidgetDevices->rowCount());
+    ui->pushButtonDelete->setEnabled(ui->tblWidgetDevices->currentRow() >= 0 && ui->tblWidgetDevices->currentRow() < ui->tblWidgetDevices->rowCount());
 }
 
-void DeviceManagerMain::onAddDevice()
+void DeviceManager::onAddDevice()
 {
     QStringList existingNames;
     for (const Device &device : m_vecDevice)
@@ -103,7 +103,7 @@ void DeviceManagerMain::onAddDevice()
         existingNames << device.strDeviceName;
     }
 
-    DeviceManagerSub dialog(this);
+    DeviceAdmin dialog(this);
     dialog.setWindowTitle("新建设备");
     dialog.setExistingDeviceNames(existingNames);
 
@@ -121,9 +121,9 @@ void DeviceManagerMain::onAddDevice()
     }
 }
 
-void DeviceManagerMain::onEditDevice()
+void DeviceManager::onEditDevice()
 {
-    const int currentRow = ui->tableWidgetDevices->currentRow();
+    const int currentRow = ui->tblWidgetDevices->currentRow();
     if (currentRow < 0 || currentRow >= m_vecDevice.size())
     {
         QMessageBox::warning(this, "Edit Device", "Please select a device to edit.");
@@ -139,7 +139,7 @@ void DeviceManagerMain::onEditDevice()
         }
     }
 
-    DeviceManagerSub dialog(this);
+    DeviceAdmin dialog(this);
     dialog.setWindowTitle("编辑设备");
     dialog.setDevice(m_vecDevice.at(currentRow));
     dialog.setExistingDeviceNames(existingNames);
@@ -164,9 +164,9 @@ void DeviceManagerMain::onEditDevice()
     }
 }
 
-void DeviceManagerMain::onDeleteDevice()
+void DeviceManager::onDeleteDevice()
 {
-    const int currentRow = ui->tableWidgetDevices->currentRow();
+    const int currentRow = ui->tblWidgetDevices->currentRow();
     if (currentRow < 0 || currentRow >= m_vecDevice.size())
     {
         QMessageBox::warning(this, "Delete Device", "Please select a device to delete.");
@@ -190,7 +190,7 @@ void DeviceManagerMain::onDeleteDevice()
     }
 }
 
-void DeviceManagerMain::onTableItemDoubleClicked(QTableWidgetItem *item)
+void DeviceManager::onTableItemDoubleClicked(QTableWidgetItem *item)
 {
     Q_UNUSED(item);
     onEditDevice();

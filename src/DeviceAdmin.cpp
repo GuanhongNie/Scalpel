@@ -1,6 +1,6 @@
-#include "DeviceManagerSub.h"
-#include "DeviceManagerMain.h"
-#include "ui_DeviceManagerSub.h"
+#include "DeviceAdmin.h"
+#include "DeviceManager.h"
+#include "ui_DeviceAdmin.h"
 
 #include <QMessageBox>
 #include <QRegularExpression>
@@ -23,23 +23,23 @@ bool isValidPort(const QString &portText)
 
 } // namespace
 
-DeviceManagerSub::DeviceManagerSub(QWidget *parent)
+DeviceAdmin::DeviceAdmin(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::DeviceManagerSub)
+    , ui(new Ui::DeviceAdmin)
 {
     ui->setupUi(this);
     setWindowTitle("Device Detail");
 
-    connect(ui->pushButtonOK, &QPushButton::clicked, this, &DeviceManagerSub::onOkClicked);
+    connect(ui->pushButtonOK, &QPushButton::clicked, this, &DeviceAdmin::onOkClicked);
     connect(ui->pushButtonCancel, &QPushButton::clicked, this, &QDialog::reject);
 }
 
-DeviceManagerSub::~DeviceManagerSub()
+DeviceAdmin::~DeviceAdmin()
 {
     delete ui;
 }
 
-void DeviceManagerSub::setDevice(const Device &device)
+void DeviceAdmin::setDevice(const Device &device)
 {
     ui->lineEditDeviceName->setText(device.strDeviceName);
     ui->lineEditDeviceIP->setText(device.strDeviceIP);
@@ -47,7 +47,7 @@ void DeviceManagerSub::setDevice(const Device &device)
     ui->checkBoxDeviceEnabled->setChecked(device.bEnabled);
 }
 
-Device DeviceManagerSub::device() const
+Device DeviceAdmin::device() const
 {
     Device device;
     device.strDeviceName = ui->lineEditDeviceName->text();
@@ -57,17 +57,17 @@ Device DeviceManagerSub::device() const
     return device;
 }
 
-void DeviceManagerSub::setExistingDeviceNames(const QStringList &deviceNames)
+void DeviceAdmin::setExistingDeviceNames(const QStringList &deviceNames)
 {
     m_existingDeviceNames = deviceNames;
 }
 
-void DeviceManagerSub::setCurrentDeviceName(const QString &deviceName)
+void DeviceAdmin::setCurrentDeviceName(const QString &deviceName)
 {
     m_currentDeviceName = deviceName;
 }
 
-void DeviceManagerSub::onOkClicked()
+void DeviceAdmin::onOkClicked()
 {
     const QString name = ui->lineEditDeviceName->text().trimmed();
     const QString ip = ui->lineEditDeviceIP->text().trimmed();
